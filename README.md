@@ -24,7 +24,7 @@ Add it in your root build.gradle at the end of repositories:
 #### Step 2. Add the dependency ####
 
 	dependencies {
-    	implementation  'com.github.jianyuyouhun:AnimatedDialog:1.0.0'
+    	implementation  'com.github.jianyuyouhun:AnimatedDialog:1.0.1'
 	}
 
 ### 使用 ###
@@ -72,6 +72,18 @@ ExitAnimationType定义：
         TO_RIGHT,//右侧离场
         FADE_OUT//淡出
     }
+
+### 一些配置 ###
+
+1、 修改背景颜色
+
+	bgColor = Color.parseColor("#55000000")//kotlin中
+	setBgColor(Color.parseColor("#55000000"))//java中
+
+2、 修改动画时长
+
+	animationDuration = 300L //kotlin中
+	setAnimationDuration(300) //java中
 
 ### 注意 ###
 

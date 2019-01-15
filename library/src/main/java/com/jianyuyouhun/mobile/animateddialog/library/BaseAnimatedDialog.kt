@@ -26,8 +26,8 @@ abstract class BaseAnimatedDialog(context: Context,
 
     private val handler by lazy { Handler(Looper.getMainLooper()) }
     private var animatorSet: AnimatorSet? = null
-    private var bgColor:Int = Color.parseColor("#55000000")
-    private var animationDuration = 300L
+    var bgColor:Int = Color.parseColor("#55000000")
+    var animationDuration = 300L
 
     private var canCancelByTouchOutside = true
     override fun onCreate(savedInstanceState: Bundle?) {
