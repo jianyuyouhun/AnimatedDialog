@@ -24,7 +24,7 @@ Add it in your root build.gradle at the end of repositories:
 #### Step 2. Add the dependency ####
 
 	dependencies {
-    	implementation  'com.github.jianyuyouhun:AnimatedDialog:1.0.2'
+    	implementation  'com.github.jianyuyouhun:AnimatedDialog:1.0.3'
 	}
 
 ### 使用 ###
@@ -66,7 +66,6 @@ EnterAnimationType定义：
         FROM_LEFT,//从左侧进入
         FROM_RIGHT,//从右侧进入
         FADE_IN,//淡入
-        CUSTOMER//自定义，采用此配置时需要自定义AnimatorCreator实现类
     }
 
 ExitAnimationType定义：
@@ -77,12 +76,86 @@ ExitAnimationType定义：
         TO_LEFT,//左侧离场
         TO_RIGHT,//右侧离场
         FADE_OUT,//淡出
-        CUSTOMER//自定义，采用此配置时需要自定义AnimatorCreator实现类
     }
 
 2、自定义动画配置
 
-实现AnimatorCreator接口，注意：当enterType或exitType设置为CUSTOMER时，对应的Attr配置值均为0。实际上enterType、exitType一般不采用CUSTOMER，可以直接重新实现一个AnimatorCreator来替换掉默认的实现。
+实现AnimatorCreator接口。比如要增加折叠动画，则可以重写一个ScaleAnimatorCreator
+
+	class ScaleAnimatorCreator : AnimatorCreator {
+	    override fun onCreateEnterAnimator(
+	        animatorView: View,
+	        attr: AnimatorAttr,
+	        enterAnimationType: EnterAnimationType
+	    ): List<Animator> {
+	        var animator1: Animator? = null
+	        var animator2: Animator? = null
+	        when (enterAnimationType) {
+	            EnterAnimationType.FROM_UP,
+	            EnterAnimationType.FROM_DOWN -> {
+				//                animator1 = ObjectAnimator.ofFloat(animatorView, View.TRANSLATION_Y, attr.fromY, attr.toY)
+	                animator2 = ObjectAnimator.ofFloat(animatorView, View.SCALE_Y, 0F, 1F)
+	            }
+	            EnterAnimationType.FROM_LEFT,
+	            EnterAnimationType.FROM_RIGHT -> {
+				//                animator1 = ObjectAnimator.ofFloat(animatorView, View.TRANSLATION_X, attr.fromX, attr.toX)
+	                animator2 = ObjectAnimator.ofFloat(animatorView, View.SCALE_X, 0F, 1F)
+	            }
+	            EnterAnimationType.FADE_IN -> {
+	                animator1 = ObjectAnimator.ofFloat(animatorView, View.ALPHA, 0F, 1F)
+	            }
+	        }
+	
+	        return if (animator1 == null && animator2 == null) {
+	            emptyList()
+	        } else if (animator1 == null) {
+	            arrayListOf(animator2!!)
+	        } else if (animator2 == null) {
+	            arrayListOf(animator1)
+	        } else {
+	            arrayListOf(animator1, animator2)
+	        }
+	    }
+	
+	    override fun onCreateExitAnimator(
+	        animatorView: View,
+	        attr: AnimatorAttr,
+	        exitAnimationType: ExitAnimationType
+	    ): List<Animator> {
+	        var animator1: Animator? = null
+	        var animator2: Animator? = null
+	        when (exitAnimationType) {
+	            ExitAnimationType.TO_UP,
+	            ExitAnimationType.TO_DOWN -> {
+				//                animator1 = ObjectAnimator.ofFloat(animatorView, View.TRANSLATION_Y, attr.fromY, attr.toY)
+	                animator2 = ObjectAnimator.ofFloat(animatorView, View.SCALE_Y, 1F, 0F)
+	            }
+	            ExitAnimationType.TO_LEFT,
+	            ExitAnimationType.TO_RIGHT -> {
+				//                animator1 = ObjectAnimator.ofFloat(animatorView, View.TRANSLATION_X, attr.fromX, attr.toX)
+	                animator2 = ObjectAnimator.ofFloat(animatorView, View.SCALE_X, 1F, 0F)
+	            }
+	            ExitAnimationType.FADE_OUT -> {
+	                animator1 = ObjectAnimator.ofFloat(animatorView, View.ALPHA, 1F, 0F)
+	            }
+	        }
+	        return if (animator1 == null && animator2 == null) {
+	            emptyList()
+	        } else if (animator1 == null) {
+	            arrayListOf(animator2!!)
+	        } else if (animator2 == null) {
+	            arrayListOf(animator1)
+	        } else {
+	            arrayListOf(animator1, animator2)
+	        }
+	    }
+	}
+
+然后修改AnimatorConfig的animatorCreator = ScaleAnimatorCreator::class
+
+就可以实现折叠效果了
+
+**ScaleAnimatorCreator代码在demo中**
 
 ### 一些配置 ###
 
