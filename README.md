@@ -78,7 +78,7 @@ ExitAnimationType定义：
         TO_RIGHT,//右侧离场
         FADE_OUT,//淡出
 	CUSTOMER//自定义，采用此配置时需要自定义AnimatorCreator实现类
-	}
+    }
 
 2、自定义动画配置
 
