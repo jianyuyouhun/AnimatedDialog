@@ -24,19 +24,24 @@ Add it in your root build.gradle at the end of repositories:
 #### Step 2. Add the dependency ####
 
 	dependencies {
-    	implementation  'com.github.jianyuyouhun:AnimatedDialog:1.0.1'
+    	implementation  'com.github.jianyuyouhun:AnimatedDialog:1.0.2'
 	}
 
 ### 使用 ###
 
+1、默认配置注解 
+
+	@AnimatorConfig(
+	    contentGravity = ContentViewGravity.BOTTOM,//默认为CETNER
+	    enterType = EnterAnimationType.FROM_DOWN,//默认为FADE_IN
+	    exitType = ExitAnimationType.TO_DOWN,//默认为FADE_OUT
+		animatorCreator = DefaultAnimatorCreator::class//默认为DefaultAnimatorCreator
+	)
 	class TestDialog(
 	    context: Context,
 	    style: Int = R.style.AnimatedDialogTheme//可传递其他style来修改主体，默认主题为全屏模式
 	) : BaseAnimatedDialog(
 	    context,
-	    ContentViewGravity.BOTTOM,//contentView的位置
-	    EnterAnimationType.FROM_DOWN,//入场动画
-	    ExitAnimationType.TO_DOWN,//离场动画
 	    style
 	) {
 	    override fun getLayoutId(): Int = R.layout.dialog_test
@@ -60,7 +65,8 @@ EnterAnimationType定义：
         FROM_UP,//从上方进入
         FROM_LEFT,//从左侧进入
         FROM_RIGHT,//从右侧进入
-        FADE_IN//淡入
+        FADE_IN,//淡入
+		CUSTOMER//自定义，采用此配置时需要自定义AnimatorCreator实现类
     }
 
 ExitAnimationType定义：
@@ -70,8 +76,13 @@ ExitAnimationType定义：
         TO_UP,//上方离场
         TO_LEFT,//左侧离场
         TO_RIGHT,//右侧离场
-        FADE_OUT//淡出
-    }
+        FADE_OUT,//淡出
+		CUSTOMER//自定义，采用此配置时需要自定义AnimatorCreator实现类
+	}
+
+2、自定义动画配置
+
+实现AnimatorCreator接口，注意：当enterType或exitType设置为CUSTOMER时，对应的Attr配置值均为0。实际上enterType、exitType一般不采用CUSTOMER，可以直接重新实现一个AnimatorCreator来替换掉默认的实现。
 
 ### 一些配置 ###
 
@@ -84,8 +95,3 @@ ExitAnimationType定义：
 
 	animationDuration = 300L //kotlin中
 	setAnimationDuration(300) //java中
-
-### 注意 ###
-
-在java中使用时继承需要传递所有配置，kotlin中不传则采用默认配置，分别是
-**CENTER, FROM\_DOWN, TO\_DOWN**
