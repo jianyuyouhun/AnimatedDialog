@@ -14,22 +14,64 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
+import com.jianyuyouhun.mobile.animateddialog.library.annotation.AnimatorConfig
+import com.jianyuyouhun.mobile.animateddialog.library.config.ContentViewGravity
+import com.jianyuyouhun.mobile.animateddialog.library.config.EnterAnimationType
+import com.jianyuyouhun.mobile.animateddialog.library.config.ExitAnimationType
+import com.jianyuyouhun.mobile.animateddialog.library.creator.AnimatorAttr
+import com.jianyuyouhun.mobile.animateddialog.library.creator.AnimatorCreator
+import com.jianyuyouhun.mobile.animateddialog.library.creator.DefaultAnimatorCreator
 
-abstract class BaseAnimatedDialog(context: Context,
-                         private val contentViewGravity: ContentViewGravity = ContentViewGravity.CENTER,
-                         private val enterAnimation: EnterAnimationType = EnterAnimationType.FROM_DOWN,
-                         private val exitAnimation: ExitAnimationType = ExitAnimationType.TO_DOWN,
-                         style: Int = R.style.AnimatedDialogTheme) : Dialog(context, style) {
-    private lateinit var baseAllContainer: RelativeLayout
-    private lateinit var baseBgView : View
-    private lateinit var itemContainer : RelativeLayout
+abstract class BaseAnimatedDialog(
+    context: Context,
+    style: Int = R.style.AnimatedDialogTheme
+) : Dialog(context, style) {
 
     private val handler by lazy { Handler(Looper.getMainLooper()) }
     private var animatorSet: AnimatorSet? = null
-    var bgColor:Int = Color.parseColor("#55000000")
+    var bgColor: Int = Color.parseColor("#55000000")
     var animationDuration = 300L
-
     private var canCancelByTouchOutside = true
+
+    private lateinit var animatorCreator: AnimatorCreator
+    private lateinit var contentViewGravity: ContentViewGravity
+    private lateinit var enterAnimation: EnterAnimationType
+    private lateinit var exitAnimation: ExitAnimationType
+
+    init {
+        var cls: Class<*>? = this.javaClass
+        var hasFoundAnnotation = false
+        while (cls != null && !hasFoundAnnotation) {
+            val animatedConfig = cls.getAnnotation(AnimatorConfig::class.java)
+            if (animatedConfig == null) {
+                cls = cls.superclass
+                hasFoundAnnotation = false
+            } else {
+                hasFoundAnnotation = true
+                try {
+                    animatorCreator = animatedConfig.animatorCreator.java.newInstance()
+                    contentViewGravity = animatedConfig.contentGravity
+                    enterAnimation = animatedConfig.enterType
+                    exitAnimation = animatedConfig.exitType
+                } catch (e: InstantiationException) {
+                    throw RuntimeException(e)
+                } catch (e: IllegalAccessException) {
+                    throw RuntimeException(e)
+                }
+            }
+        }
+        if (!hasFoundAnnotation) {
+            animatorCreator = DefaultAnimatorCreator()
+            contentViewGravity = ContentViewGravity.CENTER
+            enterAnimation = EnterAnimationType.FADE_IN
+            exitAnimation = ExitAnimationType.FADE_OUT
+        }
+    }
+
+    private lateinit var baseAllContainer: RelativeLayout
+    private lateinit var baseBgView: View
+    private lateinit var itemContainer: RelativeLayout
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         super.setContentView(R.layout.dialog_base_animated_layout)
@@ -80,14 +122,16 @@ abstract class BaseAnimatedDialog(context: Context,
             animatorSet = AnimatorSet()
             animatorSet!!.apply {
                 val alphaAnimator = ObjectAnimator.ofFloat(baseBgView, View.ALPHA, 0F, 1F)
-                val translationAnimator = getEnterAnimation(itemContainer)
+                val translationAnimators = getEnterAnimation(itemContainer)
                 duration = animationDuration
                 addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator?) {
                         animatorSet = null
                     }
                 })
-                playTogether(alphaAnimator, translationAnimator)
+                val animatorList = ArrayList(translationAnimators)
+                animatorList.add(alphaAnimator)
+                playTogether(animatorList)
                 handler.post {
                     start()
                 }
@@ -100,7 +144,7 @@ abstract class BaseAnimatedDialog(context: Context,
         animatorSet = AnimatorSet()
         animatorSet!!.apply {
             val alphaAnimator = ObjectAnimator.ofFloat(baseBgView, View.ALPHA, 1F, 0F)
-            val translationAnimator = getExitAnimation(itemContainer)
+            val translationAnimators = getExitAnimation(itemContainer)
             duration = animationDuration
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator?) {
@@ -109,7 +153,9 @@ abstract class BaseAnimatedDialog(context: Context,
                     superDismiss()
                 }
             })
-            playTogether(alphaAnimator, translationAnimator)
+            val animatorList = ArrayList(translationAnimators)
+            animatorList.add(alphaAnimator)
+            playTogether(animatorList)
             start()
         }
     }
@@ -136,67 +182,58 @@ abstract class BaseAnimatedDialog(context: Context,
     abstract fun getLayoutId(): Int
 
     open fun createLayoutParams(): RelativeLayout.LayoutParams {
-        return RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT)
+        return RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.WRAP_CONTENT,
+            RelativeLayout.LayoutParams.WRAP_CONTENT
+        )
     }
 
-    enum class EnterAnimationType {
-        FROM_DOWN,
-        FROM_UP,
-        FROM_LEFT,
-        FROM_RIGHT,
-        FADE_IN,
+    private fun getEnterAnimation(view: View): List<Animator> {
+        var fromX = 0F
+        var fromY = 0F
+        val toX = 0F
+        val toY = 0F
+        when (enterAnimation) {
+            EnterAnimationType.FROM_UP -> {
+                fromY = -view.height.toFloat() + (-view.top.toFloat())
+            }
+            EnterAnimationType.FROM_DOWN -> {
+                fromY = view.height.toFloat() + (baseAllContainer.height.toFloat() - view.bottom.toFloat())
+            }
+            EnterAnimationType.FROM_LEFT -> {
+                fromX = -view.width.toFloat() + (-view.left.toFloat())
+            }
+            EnterAnimationType.FROM_RIGHT -> {
+                fromX = view.width.toFloat() + (baseAllContainer.width.toFloat() - view.right.toFloat())
+            }
+            else -> {
+            }
+        }
+        return animatorCreator.onCreateEnterAnimator(view, AnimatorAttr(fromX, fromY, toX, toY), enterAnimation)
     }
 
-    enum class ExitAnimationType {
-        TO_DOWN,
-        TO_UP,
-        TO_LEFT,
-        TO_RIGHT,
-        FADE_OUT
-    }
-
-    enum class ContentViewGravity {
-        TOP,
-        CENTER,
-        BOTTOM,
-        LEFT,
-        RIGHT
-    }
-
-    private fun getEnterAnimation(view: View): Animator = when (enterAnimation) {
-        EnterAnimationType.FROM_UP -> {
-            ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, -view.height.toFloat() + (-view.top.toFloat()), 0F)
+    private fun getExitAnimation(view: View): List<Animator> {
+        val fromX = 0F
+        val fromY = 0F
+        var toX = 0F
+        var toY = 0F
+        when (exitAnimation) {
+            ExitAnimationType.TO_UP -> {
+                toY = -view.height.toFloat() + (-view.top.toFloat())
+            }
+            ExitAnimationType.TO_DOWN -> {
+                toY = view.height.toFloat() + (baseAllContainer.height.toFloat() - view.bottom.toFloat())
+            }
+            ExitAnimationType.TO_LEFT -> {
+                toX = -view.width.toFloat() + (-view.left.toFloat())
+            }
+            ExitAnimationType.TO_RIGHT -> {
+                toX = view.width.toFloat() + (baseAllContainer.width.toFloat() - view.right.toFloat())
+            }
+            else -> {
+            }
         }
-        EnterAnimationType.FROM_DOWN -> {
-            ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, view.height.toFloat() + (baseAllContainer.height.toFloat() - view.bottom.toFloat()), 0F)
-        }
-        EnterAnimationType.FROM_LEFT -> {
-            ObjectAnimator.ofFloat(view, View.TRANSLATION_X, -view.width.toFloat() + (-view.left.toFloat()), 0F)
-        }
-        EnterAnimationType.FROM_RIGHT -> {
-            ObjectAnimator.ofFloat(view, View.TRANSLATION_X, view.width.toFloat() + (baseAllContainer.width.toFloat() - view.right.toFloat()), 0F)
-        }
-        EnterAnimationType.FADE_IN -> {
-            ObjectAnimator.ofFloat(view, View.ALPHA, 0F, 1F)
-        }
-    }
-
-    private fun getExitAnimation(view: View): Animator = when (exitAnimation) {
-        ExitAnimationType.TO_UP -> {
-            ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, 0F, -view.height.toFloat() + (-view.top.toFloat()))
-        }
-        ExitAnimationType.TO_DOWN -> {
-            ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, 0F, view.height.toFloat() + (baseAllContainer.height.toFloat() - view.bottom.toFloat()))
-        }
-        ExitAnimationType.TO_LEFT -> {
-            ObjectAnimator.ofFloat(view, View.TRANSLATION_X, 0F, -view.width.toFloat() + (-view.left.toFloat()))
-        }
-        ExitAnimationType.TO_RIGHT -> {
-            ObjectAnimator.ofFloat(view, View.TRANSLATION_X, 0F, view.width.toFloat() + (baseAllContainer.width.toFloat() - view.right.toFloat()))
-        }
-        ExitAnimationType.FADE_OUT -> {
-            ObjectAnimator.ofFloat(view, View.ALPHA, 1F, 0F)
-        }
+        return animatorCreator.onCreateExitAnimator(view, AnimatorAttr(fromX, fromY, toX, toY), exitAnimation)
     }
 
     //根据id生成填充view并返回
