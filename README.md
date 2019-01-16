@@ -66,7 +66,7 @@ EnterAnimationType定义：
         FROM_LEFT,//从左侧进入
         FROM_RIGHT,//从右侧进入
         FADE_IN,//淡入
-		CUSTOMER//自定义，采用此配置时需要自定义AnimatorCreator实现类
+	CUSTOMER//自定义，采用此配置时需要自定义AnimatorCreator实现类
     }
 
 ExitAnimationType定义：
@@ -77,7 +77,7 @@ ExitAnimationType定义：
         TO_LEFT,//左侧离场
         TO_RIGHT,//右侧离场
         FADE_OUT,//淡出
-		CUSTOMER//自定义，采用此配置时需要自定义AnimatorCreator实现类
+	CUSTOMER//自定义，采用此配置时需要自定义AnimatorCreator实现类
 	}
 
 2、自定义动画配置
