@@ -27,15 +27,8 @@ class DefaultAnimatorCreator : AnimatorCreator {
             EnterAnimationType.FADE_IN -> {
                 ObjectAnimator.ofFloat(animatorView, View.ALPHA, 0F, 1F)
             }
-            EnterAnimationType.CUSTOMER -> {
-                null
-            }
         }
-        return if (animator == null) {
-            emptyList()
-        } else {
-            arrayListOf(animator)
-        }
+        return arrayListOf(animator)
     }
 
     override fun onCreateExitAnimator(
@@ -55,14 +48,7 @@ class DefaultAnimatorCreator : AnimatorCreator {
             ExitAnimationType.FADE_OUT -> {
                 ObjectAnimator.ofFloat(animatorView, View.ALPHA, 1F, 0F)
             }
-            ExitAnimationType.CUSTOMER -> {
-                null
-            }
         }
-        return if (animator == null) {
-            emptyList()
-        } else {
-            arrayListOf(animator)
-        }
+        return arrayListOf(animator)
     }
 }

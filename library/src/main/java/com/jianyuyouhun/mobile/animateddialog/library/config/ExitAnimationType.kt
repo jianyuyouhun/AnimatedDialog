@@ -9,5 +9,4 @@ enum class ExitAnimationType {
     TO_LEFT,
     TO_RIGHT,
     FADE_OUT,
-    CUSTOMER
 }

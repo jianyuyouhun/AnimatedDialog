@@ -13,7 +13,7 @@ import com.jianyuyouhun.mobile.animateddialog.library.creator.DefaultAnimatorCre
     contentGravity = ContentViewGravity.BOTTOM,
     enterType = EnterAnimationType.FROM_DOWN,
     exitType = ExitAnimationType.TO_DOWN,
-    animatorCreator = DefaultAnimatorCreator::class
+    animatorCreator = ScaleAnimatorCreator::class
 )
 class TestDialog(context: Context) : BaseAnimatedDialog(context) {
     override fun getLayoutId(): Int = R.layout.dialog_test

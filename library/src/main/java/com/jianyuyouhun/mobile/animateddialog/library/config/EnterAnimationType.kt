@@ -9,5 +9,4 @@ enum class EnterAnimationType {
     FROM_LEFT,
     FROM_RIGHT,
     FADE_IN,
-    CUSTOMER,
 }
