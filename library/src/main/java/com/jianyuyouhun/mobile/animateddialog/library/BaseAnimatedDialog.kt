@@ -81,7 +81,7 @@ abstract class BaseAnimatedDialog(
         itemContainer = findViewById(R.id.base_item_container)
         itemContainer.removeAllViews()
         itemContainer.layoutParams = createLayoutParams()
-        itemContainer.addView(itemContainer.inflate(getLayoutId()), createLayoutParams())
+        itemContainer.addView(itemContainer.inflate(getLayoutId()))
         (itemContainer.layoutParams as RelativeLayout.LayoutParams).apply {
             when (contentViewGravity) {
                 ContentViewGravity.CENTER -> {
