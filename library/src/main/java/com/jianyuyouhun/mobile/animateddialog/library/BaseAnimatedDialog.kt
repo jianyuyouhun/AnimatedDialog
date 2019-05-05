@@ -161,6 +161,9 @@ abstract class BaseAnimatedDialog(
     }
 
     private fun superDismiss() {
+        if (ownerActivity?.isFinishing == true) {
+            return
+        }
         super.dismiss()
     }
 
