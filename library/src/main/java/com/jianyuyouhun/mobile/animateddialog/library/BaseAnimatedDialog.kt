@@ -115,7 +115,14 @@ abstract class BaseAnimatedDialog(
     }
 
     override fun show() {
-        if (animatorSet != null) return
+        show(null)
+    }
+
+    fun show(listener: OnDialogAnimatedListener?) {
+        if (animatorSet != null) {
+            listener?.onError("has been executing an animator already")
+            return
+        }
         super.show()
         itemContainer.post {
             itemContainer.visibility = View.VISIBLE
@@ -127,6 +134,7 @@ abstract class BaseAnimatedDialog(
                 addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator?) {
                         animatorSet = null
+                        listener?.onFinished()
                     }
                 })
                 val animatorList = ArrayList(translationAnimators)
@@ -140,7 +148,14 @@ abstract class BaseAnimatedDialog(
     }
 
     override fun dismiss() {
-        if (animatorSet != null) return
+        dismiss(null)
+    }
+
+    fun dismiss(listener: OnDialogAnimatedListener?) {
+        if (animatorSet != null) {
+            listener?.onError("has been executing an animator already")
+            return
+        }
         animatorSet = AnimatorSet()
         animatorSet!!.apply {
             val alphaAnimator = ObjectAnimator.ofFloat(baseBgView, View.ALPHA, 1F, 0F)
@@ -151,6 +166,7 @@ abstract class BaseAnimatedDialog(
                     animatorSet = null
                     itemContainer.visibility = View.INVISIBLE
                     superDismiss()
+                    listener?.onFinished()
                 }
             })
             val animatorList = ArrayList(translationAnimators)
@@ -242,6 +258,11 @@ abstract class BaseAnimatedDialog(
     //根据id生成填充view并返回
     private fun ViewGroup.inflate(layoutRes: Int): View {
         return LayoutInflater.from(context).inflate(layoutRes, this, false)
+    }
+
+    interface OnDialogAnimatedListener {
+        fun onFinished()
+        fun onError(msg: String)
     }
 
 }
