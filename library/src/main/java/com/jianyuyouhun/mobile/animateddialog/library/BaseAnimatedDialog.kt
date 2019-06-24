@@ -125,7 +125,6 @@ abstract class BaseAnimatedDialog(
         }
         super.show()
         itemContainer.post {
-            itemContainer.visibility = View.VISIBLE
             animatorSet = AnimatorSet()
             animatorSet!!.apply {
                 val alphaAnimator = ObjectAnimator.ofFloat(baseBgView, View.ALPHA, 0F, 1F)
@@ -141,6 +140,8 @@ abstract class BaseAnimatedDialog(
                 animatorList.add(alphaAnimator)
                 playTogether(animatorList)
                 handler.post {
+                    baseAllContainer.visibility = View.VISIBLE
+                    itemContainer.visibility = View.VISIBLE
                     start()
                 }
             }
